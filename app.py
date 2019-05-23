@@ -24,42 +24,42 @@ class Play(AggregateRoot):
 
 with SQLAlchemyApplication(persist_event_type=Play.Event) as app:
 
-    world = Play.__create__()
+    play = Play.__create__()
 
-    version = world.__version__
+    version = play.__version__
     # Aggregate not yet in repository.
-    assert world.id not in app.repository
+    assert play.id not in app.repository
 
     # Execute commands.
-    world.rename('dinosaurs')
-    world.rename('trucks')
-    world.rename('internet')
+    play.rename('play_1')
+    play.rename('play_the_second')
+    play.rename('blue sky')
 
-    world.__save__()
-    assert world.id in app.repository
-    copy = app.repository[world.id]
+    play.__save__()
+    assert play.id in app.repository
+    copy = app.repository[play.id]
 
     # View retrieved aggregate.
 
     # Verify retrieved state (cryptographically).
-    assert copy.__head__ == world.__head__
+    assert copy.__head__ == play.__head__
 
     # Delete aggregate.
-    world.__discard__()
-    world.__save__()
+    play.__discard__()
+    play.__save__()
 
     # Discarded aggregate not found.
-    assert world.id not in app.repository
+    assert play.id not in app.repository
     try:
         # Repository raises key error.
-        app.repository[world.id]
+        app.repository[play.id]
     except KeyError:
         pass
     else:
         raise Exception("Shouldn't get here")
 
     # Get historical state (at version from above).
-    old = app.repository.get_entity(world.id, at=version)
+    old = app.repository.get_entity(play.id, at=version)
 
     # Optimistic concurrency control (no branches).
 
@@ -72,7 +72,7 @@ with SQLAlchemyApplication(persist_event_type=Play.Event) as app:
         raise Exception("Shouldn't get here")
 
     # Check domain event data integrity (happens also during replay).
-    events = app.event_store.get_domain_events(world.id)
+    events = app.event_store.get_domain_events(play.id)
     last_hash = ''
 
     for event in events:
@@ -81,21 +81,10 @@ with SQLAlchemyApplication(persist_event_type=Play.Event) as app:
         last_hash = event.__event_hash__
 
     # Verify stored sequence of events against known value.
-    assert last_hash == world.__head__
+    assert last_hash == play.__head__
 
     # Project application event notifications.
     from eventsourcing.interface.notificationlog import NotificationLogReader
     reader = NotificationLogReader(app.notification_log)
-    for read in reader.read():
-        print(read)
 
-    # - create two more aggregates
-    world = Play.__create__()
-    world.__save__()
-
-    world = Play.__create__()
-    world.__save__()
-
-    # - get the new event notifications from the reader
-    notification_ids = [n['id'] for n in reader.read()]
-    #assert notification_ids == [6, 7]
+    #TODO: summfin cool?
