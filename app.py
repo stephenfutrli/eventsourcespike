@@ -10,9 +10,10 @@ os.environ['DB_URI'] = 'sqlite:////tmp/foo.db'
 
 class Play(AggregateRoot):
 
-    def __init__(self, **kwargs):
+    def __init__(self, name, **kwargs):
         super(Play, self).__init__(**kwargs)
-        self.name = 'wonder'
+        self.name = name
+
 
     def rename(self, newname):
         self.__trigger_event__(Play.PlayRenamed, name=newname)
@@ -24,7 +25,8 @@ class Play(AggregateRoot):
 
 with SQLAlchemyApplication(persist_event_type=Play.Event) as app:
 
-    play = Play.__create__()
+    #play = Play.__create__()
+    play = Play(name='swm') 
 
     version = play.__version__
     # Aggregate not yet in repository.
