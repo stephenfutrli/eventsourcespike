@@ -88,6 +88,28 @@ class WorkSpace(AggregateRoot):
         def mutate(self, aggregate):
             aggregate.name = self.name
 
+class ForeCast(AggregateRoot):
+
+    def __init__(self, name, **kwargs):
+        super(ForeCast, self).__init__(**kwargs)
+        self.name = name
+    
+    def rename(self, newname):
+        self.__trigger_event__(ForeCast.WorkSpaceRenamed, name=newname)
+
+    def delete(self):
+        self.__trigger_event__(ForeCast.WorkSpaceDeleted)
+
+    class ForeCastDeleted(AggregateRoot.Event):
+        def mutate(self, aggregrate):
+            aggregrate.__del__(self)
+
+    class ForeCast(AggregateRoot.Event):
+        def mutate(self, aggregate):
+            aggregate.name = self.name
+
+
+
 
 
 with SQLAlchemyApplication(persist_event_type=Play.Event) as app:
