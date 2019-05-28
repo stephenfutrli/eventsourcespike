@@ -48,6 +48,48 @@ class DataSource(AggregateRoot):
         def mutate(self, aggregate):
             aggregate.name = self.name
 
+class Row(AggregateRoot):
+
+    def __init__(self, name, **kwargs):
+        super(Row, self).__init__(**kwargs)
+        self.name = name
+    
+    def rename(self, newname):
+        self.__trigger_event__(Row.RowRenamed, name=newname)
+
+    def delete(self):
+        self.__trigger_event__(Row.RowDeleted)
+
+    class RowDeleted(AggregateRoot.Event):
+        def mutate(self, aggregrate):
+            aggregrate.__del__(self)
+
+    class RowRenamed(AggregateRoot.Event):
+        def mutate(self, aggregate):
+            aggregate.name = self.name
+
+class WorkSpace(AggregateRoot):
+
+    def __init__(self, name, **kwargs):
+        super(WorkSpace, self).__init__(**kwargs)
+        self.name = name
+    
+    def rename(self, newname):
+        self.__trigger_event__(WorkSpace.WorkSpaceRenamed, name=newname)
+
+    def delete(self):
+        self.__trigger_event__(WorkSpace.WorkSpaceDeleted)
+
+    class WorkSpaceDeleted(AggregateRoot.Event):
+        def mutate(self, aggregrate):
+            aggregrate.__del__(self)
+
+    class WorkSpaceRenamed(AggregateRoot.Event):
+        def mutate(self, aggregate):
+            aggregate.name = self.name
+
+
+
 with SQLAlchemyApplication(persist_event_type=Play.Event) as app:
 
     play = Play.__create__(name='swm')
