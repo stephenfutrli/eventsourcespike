@@ -13,20 +13,47 @@ class Play(AggregateRoot):
     def __init__(self, name, **kwargs):
         super(Play, self).__init__(**kwargs)
         self.name = name
-
-
+    
     def rename(self, newname):
         self.__trigger_event__(Play.PlayRenamed, name=newname)
+
+    def delete(self):
+        self.__trigger_event__(Play.PlayDeleted)
+
+    class PlayDeleted(AggregateRoot.Event):
+        def mutate(self, aggregrate):
+            aggregrate.__del__(self)
 
     class PlayRenamed(AggregateRoot.Event):
         def mutate(self, aggregate):
             aggregate.name = self.name
 
+class DataSource(AggregateRoot):
+
+    def __init__(self, name, **kwargs):
+        super(DataSource, self).__init__(**kwargs)
+        self.name = name
+    
+    def rename(self, newname):
+        self.__trigger_event__(DataSource.DataSourceRenamed, name=newname)
+
+    def delete(self):
+        self.__trigger_event__(DataSource.DataSourceDeleted)
+
+    class DataSourceDeleted(AggregateRoot.Event):
+        def mutate(self, aggregrate):
+            aggregrate.__del__(self)
+
+    class DataSourceRenamed(AggregateRoot.Event):
+        def mutate(self, aggregate):
+            aggregate.name = self.name
 
 with SQLAlchemyApplication(persist_event_type=Play.Event) as app:
 
-    #play = Play.__create__()
-    play = Play(name='swm') 
+    play = Play.__create__(name='swm')
+    #play = Play(name='swm') 
+
+    #play = Play.create(name='mr sweeeeem')
 
     version = play.__version__
     # Aggregate not yet in repository.
@@ -85,6 +112,8 @@ with SQLAlchemyApplication(persist_event_type=Play.Event) as app:
     # Verify stored sequence of events against known value.
     assert last_hash == play.__head__
 
+
+    #play.delete()
     # Project application event notifications.
     from eventsourcing.interface.notificationlog import NotificationLogReader
     reader = NotificationLogReader(app.notification_log)
